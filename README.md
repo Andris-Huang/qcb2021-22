@@ -1,3 +1,3 @@
 # qcb2021-22
 
-Hi I am Andris, QCB projects
+Placeholder for QCB 2021-22 Project.
