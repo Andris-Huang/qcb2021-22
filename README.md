@@ -60,7 +60,7 @@ vim kernel.json
 ```
 sh setup.sh
 ```
-* You should be all set!
+* Keep pressing enter if anything is prompted. After everything finished running, you should be all set!
 
 ## Resource Links
 * Tracking Project Progress: https://docs.google.com/document/d/1MkPjx7Hh4-al4JboBponMp8Ufa1XRJyrJKwsgfcESzI/edit?usp=sharing
