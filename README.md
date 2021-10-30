@@ -58,6 +58,7 @@ vim kernel.json
 ```
 * Lastly, install the libraries needed. cd into the github repo directory, and run
 ```
+conda activate qcb
 sh setup.sh
 ```
 * Keep pressing enter if anything is prompted. After everything finished running, you should be all set!
