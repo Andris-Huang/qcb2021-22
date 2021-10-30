@@ -23,3 +23,4 @@ Program QML model that takes in information about a particle collision/decay eve
 * Solving a Higgs optimization problem with quantum annealing for machine learning (https://www.nature.com/articles/nature24047)
 * Multilevel Quantum Annealing For Graph Partitioning (https://www.dwavesys.com/media/twphvuuk/13_tues_pm_clemson_0.pdf)
 * Graph Partitioning using Quantum Annealing on the D-Wave System (https://arxiv.org/abs/1705.03082)
+* Potential Dataset: Top-quark (https://zenodo.org/record/2603256#.YXTC-nrMKUl)
