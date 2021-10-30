@@ -2,30 +2,30 @@
 
 ## Setup Instructions
 * Firstly, create a new conda environment and python kernel named "qcb" (but you can name it however you want). To do so, paste the following commands into your terminal:
-``` json
+```
 module load python
 conda create -n qcb python=3.8 ipykernel
 source $(which conda | sed -e s#bin/conda#bin/activate#)  qcb
 python -m ipykernel install --user --name qcb --display-name QCB
 ```
 * Setup the kernel, run
-```json
+```
 conda env list
 ```
 * Copy the path in the line next to the name "qcb", it should look like something like this:
-```json
+```
 /opt/conda/envs/qcb
 ```
 * cd into the directory you just copied, do something like this
-```json
+```
 cd /opt/conda/envs/qcb
 ```
 * Run the following command:
-```json
+```
 vim setup.sh
 ```
 * You should see a file editing interface has shown up in the terminal. Now press <b> i </b> on the keyboard, <b> right click </b> and paste the following codes:
-```json
+```
 #!/bin/bash
 module load python
 source $(which conda | sed -e s#bin/conda#bin/activate#)  qcb
@@ -33,19 +33,19 @@ python -m ipykernel_launcher $@
 ```
 * Now press <b> esc </b> on the keyboard and type <b> :wq </b> and press <b> enter </b>, you should now be back to the terminal. To check if you had the correct setup.sh file, run <b> cat setup.sh </b>, and you should see the codes you just pasted. If not, there are some issues and you should repeat the procedures.
 * Run code below, the path below should be the one you copied earlier, plus <b> setup.sh </b> at the end
-```json
+```
 chmod +x /opt/conda/envs/qcb/setup.sh
 ```
 * Run the following line and copy the output path
-```json
+```
 readlink -f setup.sh
 ```
 * Run
-```json
+```
 vim kernel.json
 ```
 * Delete everything in there and paste the following, the path right after "argv" is the path you just copied, everything else should be the same as the following:
-```json
+```
 {
  "argv": [
   "/opt/conda/envs/qcb/setup.sh",
@@ -57,7 +57,7 @@ vim kernel.json
 }
 ```
 * Lastly, install the libraries needed. cd into the github repo directory, and run
-```json
+```
 sh setup.sh
 ```
 * You should be all set!
