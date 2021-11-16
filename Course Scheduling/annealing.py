@@ -19,121 +19,123 @@ from dwave.system.composites import EmbeddingComposite
 
 from matplotlib import pyplot as plt
 import networkx as nx
-import argparse
 import os
 import itertools
 import random
 
-# ------- Add terminal commands -------
-parser = argparse.ArgumentParser(description='Train GNN')
-add_arg = parser.add_argument
-add_arg("-in", "--input-dir", help="Input graph directory", default=None)
-add_arg("-s","--save-fig", help="Save resulting image if True", default=True)
-add_arg("-o", "--output-dir", help="Output graph directory", default="outputs")
-args = parser.parse_args()
+import dataset
+import utils
+import time
 
-input_dir = args.input_dir
-save_fig = args.save_fig
-outname = args.output_dir
-cwd = os.path.dirname(os.path.abspath(__file__))
-output_dir = os.path.join(cwd, outname)
+csv = dataset.CSV()
 
-if os.path.exists(output_dir):
-    print(f">>> Use existing output directory >>>\nPath: {output_dir}")
-else:
-    os.makedirs(output_dir, exist_ok=True)
-    print(f">>> Output directory created >>>\nPath: {output_dir}")
+def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
+    """
+    Perform the max-cut solver by dwave and return the graph size and solving time.
+    Input:
+        graph: graph input
+        print_result: boolean for display grouping result
+    Return:
+        result: [S0, S1], node index for two groups
+        log: [n_node, delta_t], a list with number of nodes and time took to solve max-cut
+    """
 
+    n_nodes = graph["n_node"]
+    edges = graph["edges"]
+    edge_labels = graph["edge_labels"]
 
-# ------- Set up our graph -------
+    plot_fig = n_nodes <= 10
+    save_fig = save_fig and plot_fig
 
-# Create empty graph
-G = nx.Graph()
+    # ------- Set up our graph -------
 
-# Create nodes
-n_nodes = 7 # random number, to be changed
-nodes = list(range(n_nodes)) 
+    # Create empty graph
+    G = nx.Graph()
 
-# Create edges
-edges = list(itertools.combinations(range(n_nodes), 2))
-edge_weights = [random.randint(1,10) for _ in edges] # use random ints for edge weights for now, to be changed
-edge_list = [(edges[i][0], edges[i][1], edge_weights[i]) for i in range(len(edges))]
+    # Add attritubes to the graph
+    G.add_weighted_edges_from(edges)
 
-# Add edges to the graph (also adds nodes)
-edge_labels = {}
-for i in range(len(edges)):
-    key = edges[i]
-    edge_labels[key] = edge_weights[i]
-G.add_weighted_edges_from(edge_list)
+    # Save the graph beforehand for testing/demo purposes
+    if save_fig:
+        g = G.copy()
+        plt.figure()
+        pos = nx.spring_layout(G)
+        nx.draw_networkx(g, pos, node_color='r')
+        nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
+        filename = "Input Graph.png"
+        out_name = os.path.join(output_dir, filename)
+        plt.savefig(out_name, bbox_inches='tight')
 
-# Save the graph beforehand for testing purposes
-g = G.copy()
-plt.figure()
-pos = nx.spring_layout(G)
-nx.draw_networkx(g, pos, node_color='r')
-nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
-filename = "Input Graph.png"
-out_name = os.path.join(output_dir, filename)
-plt.savefig(out_name, bbox_inches='tight')
+    # ------- Set up our QUBO dictionary -------
 
-# ------- Set up our QUBO dictionary -------
+    # Initialize our h vector, J matrix
+    h = defaultdict(int)
+    J = defaultdict(int)
 
-# Initialize our h vector, J matrix
-h = defaultdict(int)
-J = defaultdict(int)
+    # Update J matrix for every edge in the graph
+    for i, j in G.edges:
+        J[(i,j)]+= 1
 
-# Update J matrix for every edge in the graph
-for i, j in G.edges:
-    J[(i,j)]+= 1
+    # ------- Run our QUBO on the QPU -------
+    # Set up QPU parameters
+    chainstrength = 2
+    numruns = 10
 
-# ------- Run our QUBO on the QPU -------
-# Set up QPU parameters
-chainstrength = 2
-numruns = 10
+    # Run the QUBO on the solver from your config file
+    start = time.time()
+    print(">>> Graph created successfully, start solving max-cut")
 
-# Run the QUBO on the solver from your config file
-sampler = EmbeddingComposite(DWaveSampler())
-response = sampler.sample_ising(h, J,
-                                chain_strength=chainstrength,
-                                num_reads=numruns,
-                                label='Example - Maximum Cut Ising')
+    sampler = EmbeddingComposite(DWaveSampler())
+    response = sampler.sample_ising(h, J,
+                                    chain_strength=chainstrength,
+                                    num_reads=numruns,
+                                    label='Maximum Cut Ising')
 
-# ------- Print results to user -------
-print('-' * 60)
-print('{:>15s}{:>15s}{:^15s}{:^15s}'.format('Set 0','Set 1','Energy','Cut Size'))
-print('-' * 60)
-for sample, E in response.data(fields=['sample','energy']):
-    S0 = [k for k,v in sample.items() if v == -1]
-    S1 = [k for k,v in sample.items() if v == 1]
-    print('{:>15s}{:>15s}{:^15s}{:^15s}'.format(str(S0),str(S1),str(E),str(int((6-E)/2))))
+    # ------- Print results to user -------
+    if print_result:
+        print('-' * 60)
+        print('{:>15s}{:>15s}{:^15s}{:^15s}'.format('Set 0','Set 1','Energy','Cut Size'))
+        print('-' * 60)
+        for sample, E in response.data(fields=['sample','energy']):
+            S0 = [k for k,v in sample.items() if v == -1]
+            S1 = [k for k,v in sample.items() if v == 1]
+            print('{:>15s}{:>15s}{:^15s}{:^15s}'.format(str(S0),str(S1),str(E),str(int((6-E)/2))))
 
+    end = time.time()
+    dt = end - start
+    delta_t = utils.time_lasted(dt)
+    print(f">>> Grouping finished, total time: {delta_t}")
 
-# ------- Display results to user -------
-# Grab best result
-# Note: "best" result is the result with the lowest energy
-# Note2: the look up table (lut) is a dictionary, where the key is the node index
-#   and the value is the set label. For example, lut[5] = 1, indicates that
-#   node 5 is in set 1 (S1).
-lut = response.first.sample
+    # ------- Display results to user -------
+    # Grab best result
+    # Note: "best" result is the result with the lowest energy
+    # Note2: the look up table (lut) is a dictionary, where the key is the node index
+    #   and the value is the set label. For example, lut[5] = 1, indicates that
+    #   node 5 is in set 1 (S1).
+    lut = response.first.sample
 
-# Interpret best result in terms of nodes and edges
-S0 = [node for node in G.nodes if lut[node]==-1]
-S1 = [node for node in G.nodes if lut[node]==1]
-cut_edges = [(u, v) for u, v in G.edges if lut[u]!=lut[v]]
-uncut_edges = [(u, v) for u, v in G.edges if lut[u]==lut[v]]
+    # Interpret best result in terms of nodes and edges
+    S0 = [node for node in G.nodes if lut[node]==-1]
+    S1 = [node for node in G.nodes if lut[node]==1]
+    cut_edges = [(u, v) for u, v in G.edges if lut[u]!=lut[v]]
+    uncut_edges = [(u, v) for u, v in G.edges if lut[u]==lut[v]]
 
-# Display best result
-plt.figure()
-nx.draw_networkx_nodes(G, pos, nodelist=S0, node_color='r')
-nx.draw_networkx_nodes(G, pos, nodelist=S1, node_color='c')
-nx.draw_networkx_edges(G, pos, edgelist=cut_edges, style='dashdot', alpha=0.5, width=3)
-nx.draw_networkx_edges(G, pos, edgelist=uncut_edges, style='solid', width=3)
-nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
-nx.draw_networkx_labels(G, pos)
+    # Display best result
+    if save_fig:
+        plt.figure()
+        nx.draw_networkx_nodes(G, pos, nodelist=S0, node_color='r')
+        nx.draw_networkx_nodes(G, pos, nodelist=S1, node_color='c')
+        nx.draw_networkx_edges(G, pos, edgelist=cut_edges, style='dashdot', alpha=0.5, width=3)
+        nx.draw_networkx_edges(G, pos, edgelist=uncut_edges, style='solid', width=3)
+        nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
+        nx.draw_networkx_labels(G, pos)
 
-filename = "Output Graph.png"
-out_name = os.path.join(output_dir, filename)
-plt.show()
-if save_fig:
-    plt.savefig(out_name, bbox_inches='tight')
-    print("\nYour plot is saved to {}".format(out_name))
+        filename = "Output Graph.png"
+        out_name = os.path.join(output_dir, filename)
+        plt.savefig(out_name, bbox_inches='tight')
+        print(">>> Your plot is saved to {}".format(out_name))
+
+    result = [S0, S1]
+    log = [n_nodes, dt]
+    
+    return result, log
