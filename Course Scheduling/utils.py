@@ -92,3 +92,20 @@ def plot_log(logs, out_img, out_file):
     plt.tight_layout()
     plt.show()
     plt.savefig(out_img, bbox_inches='tight')
+
+
+def objective_value(result, edge_weights):
+    """
+    Calculate the final objective value optimized.
+
+    Input:
+        result: final result groups
+        edge_weights: a dictionary with the initial edge weights
+    Return:
+        Optimized final value.
+    """
+    all_weights = sum([edge_weights[e] for e in edge_weights])
+    for group in result:
+        edges = list(itertools.combinations(group, 2))
+        all_weights -= sum([edge_weights[e] for e in edges])
+    return all_weights

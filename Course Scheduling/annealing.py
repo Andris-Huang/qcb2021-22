@@ -137,5 +137,5 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
 
     result = [S0, S1]
     log = [n_nodes, dt]
-    
+
     return result, log
