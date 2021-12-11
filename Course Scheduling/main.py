@@ -35,6 +35,7 @@ add_arg = parser.add_argument
 add_arg("-in", "--input-dir", help="Input graph directory", default="inputs/Random Course.csv")
 add_arg("-s","--save-fig", help="Save resulting image if True", default=False)
 add_arg("-o", "--output-dir", help="Output graph directory", default="outputs")
+add_arg("-n", "--num", help="number of nodes in a random graph", type=int, default=10)
 args = parser.parse_args()
 
 inname = args.input_dir
@@ -58,7 +59,8 @@ if os.path.exists(input_dir):
     graph = csv.make_graph(data)
 else:
     print(">>> Using a random graph")
-    graph = utils.make_random_graph(n_nodes=10)
+    n_nodes = args.num
+    graph = utils.make_random_graph(n_nodes=n_nodes)
 
 nodes = graph["nodes"]
 edge_weights = graph["edge_labels"]
@@ -94,8 +96,8 @@ result_name = f"Result.csv"
 result_file = os.path.join(output_dir, result_name)
 csv.write(final_result, result_file)
 
-log_name = "Run Time.png"
+log_name = "Run Time 5.png"
 log_img = os.path.join(output_dir, log_name)
-log_name2 = "Run Time.csv"
+log_name2 = "Run Time 5.csv"
 log_file = os.path.join(output_dir, log_name2)
 utils.plot_log(all_log, log_img, log_file)
