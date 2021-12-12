@@ -34,6 +34,8 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
     Perform the max-cut solver by dwave and return the graph size and solving time.
     Input:
         graph: graph input
+        output_dir: the output directory
+        save_fig: save the figure iff true
         print_result: boolean for display grouping result
     Return:
         result: [S0, S1], node index for two groups

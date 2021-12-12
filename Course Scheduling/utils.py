@@ -6,8 +6,8 @@ import dataset
 
 def time_lasted(t):
     if t <= 60:
-        return f"{round(t, 3)} s"
-    return f"{round(t / 60, 3)} min"
+        return f"{round(t, 3)}s"
+    return f"{round(t / 60, 3)}min"
 
 def make_random_graph(n_nodes):
     # Create nodes

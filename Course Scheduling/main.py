@@ -26,11 +26,12 @@ import random
 
 import dataset
 import annealing
+import qaoa
 import utils
 import time
 
 # ------- Add terminal commands -------
-parser = argparse.ArgumentParser(description='Train GNN')
+parser = argparse.ArgumentParser(description='Max-Cut')
 add_arg = parser.add_argument
 add_arg("-in", "--input-dir", help="Input graph directory", default="inputs/Random Course.csv")
 add_arg("-s","--save-fig", help="Save resulting image if True", default=False)
@@ -39,12 +40,21 @@ add_arg("-n", "--num", help="Number of nodes in a random graph", type=int, defau
 add_arg("--threshold", help="Max number of course in a group", type=int, default=10)
 add_arg("--log", help="Write log iff True", default=True)
 add_arg("--overwrite", help="Overwrite plot and log files iff true", default=False)
+add_arg("--method", help="The choice of max-cut solver", default="annealing")
+add_arg("-p", "--p", help="The value of p in QAOA", default=1)
 
 args = parser.parse_args()
 
+if args.method == "annealing":
+    solver = annealing.max_cut_solver
+elif args.method == "qaoa":
+    solver = lambda g, o, s: qaoa.max_cut_solver(g, o, args.p, s)
+
 inname = args.input_dir
-save_fig = bool(args.save_fig)
-write_log = bool(args.log)
+save_fig = args.save_fig
+save_fig = (save_fig == "True") if type(save_fig) == str else save_fig
+write_log = args.log
+write_log = (write_log == "True") if type(write_log) == str else write_log
 outname = args.output_dir
 cwd = os.path.dirname(os.path.abspath(__file__))
 input_dir = os.path.join(cwd, inname)
@@ -59,7 +69,7 @@ else:
 
 # ------- Load dataset -------
 csv = dataset.CSV()
-if os.path.exists(input_dir):
+if os.path.exists(input_dir) and args.num == 10:
     print(f">>> Using inputs from {input_dir}")
     data = csv.read(input_dir)
     graph = csv.make_graph(data)
@@ -86,7 +96,7 @@ def recursive_solver(graph, solver, threshold=threshold, save_fig=save_fig, debu
     if graph["n_node"] <= threshold:
         return [[nodes[int(i)] for i in graph["nodes"]]]
 
-    result, log = solver(graph, output_dir, save_fig=save_fig)
+    result, log = solver(graph, output_dir, save_fig)
     all_log.append(log)
     S0, S1 = result
     G0 = utils.updated_graph(S0, edge_weights)
@@ -95,7 +105,7 @@ def recursive_solver(graph, solver, threshold=threshold, save_fig=save_fig, debu
         print(G0['edges'])
     return recursive_solver(G0, solver) + recursive_solver(G1, solver)
 
-results = recursive_solver(graph, annealing.max_cut_solver)
+results = recursive_solver(graph, solver)
 final_result = utils.display_result(results)
 
 result_name = f"Result.csv"
