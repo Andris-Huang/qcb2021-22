@@ -3,6 +3,9 @@ import numpy as np
 import itertools
 import random
 import dataset
+import networkx as nx
+import os
+#import main
 
 def time_lasted(t):
     if t <= 60:
@@ -11,7 +14,7 @@ def time_lasted(t):
 
 def make_random_graph(n_nodes):
     # Create nodes
-    nodes = list(range(n_nodes)) 
+    nodes = [str(i) for i in range(n_nodes)] 
 
     # Create edges
     edges = list(itertools.combinations(range(n_nodes), 2))
@@ -94,18 +97,79 @@ def plot_log(logs, out_img, out_file):
     plt.savefig(out_img, bbox_inches='tight')
 
 
-def objective_value(result, edge_weights):
+def objective_value(result, nodes, edge_weights):
     """
     Calculate the final objective value optimized.
 
     Input:
         result: final result groups
+        nodes: the nodes from the original graph
         edge_weights: a dictionary with the initial edge weights
     Return:
-        Optimized final value.
+        Optimized final value and original total weights.
     """
     all_weights = sum([edge_weights[e] for e in edge_weights])
+    final_value = all_weights
     for group in result:
-        edges = list(itertools.combinations(group, 2))
-        all_weights -= sum([edge_weights[e] for e in edges])
-    return all_weights
+        new_group = [nodes.index(i) for i in group]
+        edges = list(itertools.combinations(new_group, 2))
+        for e in edges:
+            try:
+                final_value -= edge_weights[e]
+            except KeyError:
+                final_value -= edge_weights[(e[1], e[0])]
+    return all_weights, final_value
+
+def plot_graph(graph, name, output_dir, color_list='0.1'): 
+    edges = graph["edges"]
+    #edge_labels = graph["edge_labels"]
+    nodes = graph["nodes"]
+
+    g = nx.Graph()    
+    node_list = list(range(len(nodes)))
+    g.add_nodes_from(node_list)
+    g.add_weighted_edges_from(edges)
+    
+    plt.figure(figsize=(5,5))
+    pos = nx.spring_layout(g)
+    nx.draw_networkx_nodes(g, pos, node_size=15, node_color='0.1')
+    nx.draw_networkx_edges(g, pos, alpha=0.05, edge_color='0.3')
+    filename = f"{name}.png"
+    out_name = os.path.join(output_dir, filename)
+    plt.savefig(out_name, bbox_inches='tight')
+
+def plot_final_graph(groups, graph, output_dir):
+    nodes = graph["nodes"]
+    color_list = list(nodes)
+    
+    new_edges = []
+    i = 0
+    for group in groups:
+        new_group = []
+        r, g, b = random.randint(1, 255), random.randint(1, 255), random.randint(1,255)
+        for n in group:
+            j = nodes.index(n)
+            color_list[j] = (r/255, g/255, b/255)
+            new_group.append(j)
+        e = list(itertools.combinations(new_group, 2))
+        new_edges += e
+        i += 1
+    
+    edges = graph["edge_labels"]
+    edge_list = []
+    edge_labels = {}
+    for e in new_edges:
+        edge_labels[e] = edges[e]
+        edge_list.append((e[0], e[1], edges[e]))
+
+    new_graph = {
+        "n_node": len(nodes),
+        "n_edge": len(new_edges),
+        "nodes": nodes,
+        "edges": edge_list,
+        "edge_labels": edge_labels
+        }
+
+    plot_graph(new_graph, "Output Graph", output_dir, color_list=color_list)
+    return new_graph
+        

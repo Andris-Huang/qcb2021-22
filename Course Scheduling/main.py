@@ -80,6 +80,9 @@ else:
 
 nodes = graph["nodes"]
 edge_weights = graph["edge_labels"]
+
+utils.plot_graph(graph, "Input Graph", output_dir)
+
 all_log = []
 
 def recursive_solver(graph, solver, threshold=threshold, save_fig=save_fig, debug=False):
@@ -112,8 +115,11 @@ result_name = f"Result.csv"
 result_file = os.path.join(output_dir, result_name)
 csv.write(final_result, result_file)
 
-objective = utils.objective_value(results, edge_weights)
-print(f">>> Reduced Number of Conclicts: {objective}")
+all_weights, objective = utils.objective_value(results, nodes, edge_weights)
+print(f">>> Reduced Percentage of Conclicts: {round(objective/all_weights, 4)*100}%")
+
+final_graph = utils.plot_final_graph(results, graph, output_dir)
+
 
 count = 0
 while not args.overwrite:
