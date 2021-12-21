@@ -1,4 +1,5 @@
 #!/bin/bash
+conda install -c conda-forge root
 pip install qiskit
 pip install qiskit[visualization]
 pip install numpy
