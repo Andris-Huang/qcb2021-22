@@ -29,7 +29,7 @@ class Dataset:
         raise NotImplementedError
 
 
-class CSV(Dataset):
+class _CSV(Dataset):
     """
     Class for .csv and/or excel files.
     """
@@ -87,3 +87,35 @@ class CSV(Dataset):
             "edge_labels": edge_labels
             }
         return graph
+
+
+class _ROOT(Dataset):
+    """
+    Class for .root files
+    """
+    def __init__(self):
+        import ROOT
+        super().__init__(name="ROOT")
+        self.tree_name = "output"
+    
+    def _num_evts(self, filename):
+        import ROOT
+        chain = ROOT.TChain(self.tree_name, self.tree_name)
+        chain.Add(filename)
+        n_entries = chain.GetEntries()
+        return n_entries
+
+    def read(self, filename, start_entry=0, nentries=float('inf')):
+        import ROOT
+        nentries = min(self._num_evts(filename), nentries)
+        chain = ROOT.TChain(self.tree_name, self.tree_name)
+        chain.Add(filename)
+        tot_entries = chain.GetEntries()
+        nentries = nentries if (start_entry + nentries) <= tot_entries\
+            else tot_entries - start_entry
+
+        for ientry in range(nentries):
+            chain.GetEntry(ientry + start_entry)
+            yield chain
+
+    

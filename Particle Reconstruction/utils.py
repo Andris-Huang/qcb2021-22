@@ -84,7 +84,7 @@ def plot_log(logs, out_img, out_file):
     n_node = np.array([abs(int(i[0])) for i in logs], dtype=np.int8)
     run_time = np.array([i[1] for i in logs], dtype=np.float32)
 
-    csv = dataset.CSV()
+    csv = dataset._CSV()
     result = [{"Number of Nodes": n_node, "Time (s)": run_time}]
     csv.write(result, out_file)
 

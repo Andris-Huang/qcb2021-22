@@ -27,7 +27,6 @@ import dataset
 import utils
 import time
 
-csv = dataset.CSV()
 
 def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
     """
@@ -39,7 +38,6 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
         print_result: boolean for display grouping result
     Return:
         result: [S0, S1], node index for two groups
-        log: [n_node, delta_t], a list with number of nodes and time took to solve max-cut
     """
 
     n_nodes = graph["n_node"]
@@ -84,8 +82,8 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
     numruns = 10
 
     # Run the QUBO on the solver from your config file
-    start = time.time()
-    print(">>> Graph created successfully, start solving max-cut")
+    #start = time.time()
+    #print(">>> Graph created successfully, start solving max-cut")
 
     sampler = EmbeddingComposite(DWaveSampler())
     response = sampler.sample_ising(h, J,
@@ -103,10 +101,11 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
             S1 = [k for k,v in sample.items() if v == 1]
             print('{:>15s}{:>15s}{:^15s}{:^15s}'.format(str(S0),str(S1),str(E),str(int((6-E)/2))))
 
-    end = time.time()
-    dt = end - start
-    delta_t = utils.time_lasted(dt)
-    print(f">>> Grouping finished, total time: {delta_t}")
+    #end = time.time()
+    #dt = end - start
+    #delta_t = utils.time_lasted(dt)
+    #print(f">>> Grouping finished, total time: {delta_t}")
+    
 
     # ------- Display results to user -------
     # Grab best result
@@ -137,7 +136,4 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
         plt.savefig(out_name, bbox_inches='tight')
         print(">>> Your plot is saved to {}".format(out_name))
 
-    result = [S0, S1]
-    log = [n_nodes, dt]
-
-    return result, log
+    return S0, S1
