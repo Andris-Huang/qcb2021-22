@@ -63,3 +63,15 @@ class Model(Base):
             }
         
         return graph
+
+    def predict(self, solver, graph):
+        """
+        Brute force prediction.
+        """
+        nodes = graph["nodes"]
+        pred = [0 for _ in nodes]
+        edges = graph["edge_labels"]
+        for e in edges:
+            if edges[e] != 1e6:
+                pred[e[0]] = pred[e[1]] = 1
+        return pred

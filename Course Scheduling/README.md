@@ -8,7 +8,11 @@ The goal of this project is to create a course scheduling system to allocate the
 ## Results
 In this project, we randomly generated 150 courses from 6 departments, and assigned the number of students taking any two courses concurrently to be an integer in range [1, 400]. We first constructed a fully-connected graph with 150 nodes then perform the algorithm described in models and separated the courses into 21 time blocks with less than 10 courses per block using quantum annealing, running on D-Wave's quantum annealer. We repeated this procedure on the same graph multiple times to collect more data points, and our best run reduced the total conflict by 95.58%.
 
-## Resource Links
+## How to Run
+* Install the necessary packages and libraries by running the setup.sh file in the parent directory qcb2021-22
+* Run main.py in command line, with additional commands -n and --threshold to customerize the number of courses and threshold
+
+## References
 * Max-Cut and Traveling Salesman Problem — Qiskit 0.24.0 documentation (https://qiskit.org/documentation/tutorials/optimization/6_examples_max_cut_and_tsp.html)
 * QAOA: Max-Cut | Cirq (https://quantumai.google/cirq/tutorials/qaoa)
 * dwave-examples/graph-partitioning: Split a graph into two groups (https://github.com/dwave-examples/graph-partitioning)

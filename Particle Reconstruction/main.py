@@ -33,8 +33,10 @@ if __name__ == "__main__":
     config = importlib.import_module(f"src.configs.{config_name}")
     if len(sys.argv) > 2:
         save_fig = "-s" in sys.argv
+        save_result = not "-d" in sys.argv
     else:
         save_fig = False
+        save_result = True
 
 if config.method == "annealing":
     solver = annealing.max_cut_solver
@@ -51,10 +53,10 @@ input_file = os.path.join(cwd, inname)
 input_name = str(input_file)
 output_dir = os.path.join(cwd, outname)
 if os.path.exists(output_dir):
-    print(f">>> Use existing output directory\n>>> Path: {output_dir}")
+    print(f">>> Use existing output directory\n>>> Output Path: {output_dir}")
 else:
     os.makedirs(output_dir, exist_ok=True)
-    print(f">>> Output directory created\n>>> Path: {output_dir}")
+    print(f">>> Output directory created\n>>> Output Path: {output_dir}")
 
 model_name = config.model_name
 model_file = importlib.import_module(f"src.models.{model_name}")
@@ -71,14 +73,17 @@ model = model_class(data, num_evts, output_dir, save_fig)
 stamp1 = time.time()
 results = model.get_results(solver)
 auc = model.validate()
-final_result = [{"Jet Index": list(range(len(results))) + ["Accuracy"], 
-                 "Is Tau": results + [auc]}]
+stamp2 = time.time()
+
+dt = utils.time_lasted(stamp2 - stamp1)
+final_result = [{"Event Index": list(range(len(results))) + ["Accuracy", "Time"], 
+                 "Is Tau": results + [auc, dt]}]
 print(f">>> Accuracy: {auc:.4f}")
 
-result_name = f"Result for {config_name}.csv"
-result_file = os.path.join(output_dir, result_name)
-csv = dataset._CSV()
-csv.write(final_result, result_file)
+if save_result:
+    result_name = f"Result for {config_name}.csv"
+    result_file = os.path.join(output_dir, result_name)
+    csv = dataset._CSV()
+    csv.write(final_result, result_file)
 
-stamp2 = time.time()
-print(f">>> Job finished in {utils.time_lasted(stamp2 - stamp1)}")
+print(f">>> Job finished in {dt}")
