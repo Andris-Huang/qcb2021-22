@@ -25,23 +25,34 @@ import random
 
 import dataset
 import annealing
+import brute_solver
 import utils
 
 # ------- Add terminal commands -------
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print(">>> A configuration is needed!")
+        exit()
     config_name = sys.argv[1]
     config = importlib.import_module(f"src.configs.{config_name}")
     if len(sys.argv) > 2:
         save_fig = "-s" in sys.argv
         save_result = not "-d" in sys.argv
+        debug = "--debug" in sys.argv
     else:
         save_fig = False
         save_result = True
+        debug = False
+
+if debug:
+    save_fig = True
 
 if config.method == "annealing":
     solver = annealing.max_cut_solver
 elif config.method == "qaoa":
     raise NotImplementedError
+elif config.method == "brute":
+    solver = brute_solver.brute_solver
 
 inname = config.input_dir
 try:
@@ -66,19 +77,28 @@ num_evts = config.num_evts
 
 # ------- Load dataset -------
 assert os.path.exists(input_file), f"{input_file} does not exist!"
-root = dataset._ROOT()
-data = root.read(input_name, nentries=num_evts*1000)
-model = model_class(data, num_evts, output_dir, save_fig)
+editor = getattr(dataset, f"_{config.file_type}")()
+data = editor.read(input_name)
+
+if debug:
+    print("***Finished reading data***")
+    num_evts = 1
+
+model = model_class(data, num_evts, output_dir, save_fig, config=config, debug=debug)
 
 stamp1 = time.time()
 results = model.get_results(solver)
-auc = model.validate()
+
+if debug:
+    print(f"Results: {results}")
+
+acc = model.validate()
 stamp2 = time.time()
 
 dt = utils.time_lasted(stamp2 - stamp1)
 final_result = [{"Event Index": list(range(len(results))) + ["Accuracy", "Time"], 
-                 "Is Tau": results + [auc, dt]}]
-print(f">>> Accuracy: {auc:.4f}")
+                 "Is Tagged": results + [acc, dt]}]
+print(f">>> Accuracy: {acc:.4f}")
 
 if save_result:
     result_name = f"Result for {config_name}.csv"

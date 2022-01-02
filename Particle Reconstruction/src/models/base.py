@@ -1,27 +1,41 @@
 import numpy as np
 import time
 import tqdm
+import importlib
+
+utils = config = importlib.import_module("utils")
 
 class Base:
     """
     Base class for models.
     """
-    def __init__(self, data, num_evts, output_dir, save_fig):
+    def __init__(self, data, num_evts, output_dir, save_fig, config=None, debug=False):
         self.num_evts = num_evts
-        self.graphs = self.process_data(data)
+        self.graphs = self.process_data(data, debug)
         self.output_dir = output_dir
         self.save_fig = save_fig
         self.results = None
+        self.config = config
+        try:
+            lim = self.config.time_limit
+            if lim > 0 and lim != None:
+                self.time_limit = lim
+            else:
+                self.time_limit = 30 * 60
+        except:
+            self.time_limit = 30 * 60 # default 30min
+        display_time = utils.time_lasted(self.time_limit)
+        print(f">>> Job Time Limit: {display_time}")
 
     
-    def process_data(self, events):
+    def process_data(self, events, debug):
         """
         Process the data into graphs.
         """
         num_failed = 0
         all_graphs = []
         for event in events:
-            graph = self.make_graph(event)
+            graph = self.make_graph(event, debug)
             if graph != None:
                 all_graphs.append(graph)
                 if len(all_graphs) >= self.num_evts:
@@ -33,7 +47,7 @@ class Base:
         return all_graphs
             
 
-    def make_graph(self, event):
+    def make_graph(self, event, debug=False):
         """
         Convert the data read into graphs
         """
@@ -44,7 +58,7 @@ class Base:
         """
         Predict taus given solver and event
         """
-        S0, S1 = solver(graph, self.output_dir, self.save_fig)
+        S0, S1 = solver(graph, self.output_dir, self.save_fig, config=self.config)
         if len(S1) == 2:
             S0, S1 = S1, S0
         elif len(S0) != 2:
@@ -66,16 +80,22 @@ class Base:
         Get resulting predictions for all data.
         """
         results = []
+        start = time.time()
         iter_bar = tqdm.trange(len(self.graphs), desc="Progress")
         for i in iter_bar:
             graph = self.graphs[i]
+            n_node = graph["n_node"]
             pred = self.predict(solver, graph)
             results.append(pred)
             self.results = results   
             graphs_so_far = self.graphs[:i+1]
             auc = self.validate(graphs_so_far)
-            iter_bar.set_postfix_str(f"AUC: {auc:.4f}")
-        
+            iter_bar.set_postfix({"ACC": f"{auc:.4f}", 
+                                  "Size": n_node})
+            now = time.time()
+            if (now - start) >= self.time_limit:
+                print(">>> Job killed due to time limit")
+                break
         self.results = results
         return results
 
@@ -92,7 +112,7 @@ class Base:
 
         num_correct = 0
         total = 0
-        for i in range(len(graphs)):
+        for i in range(len(self.results)):
             graph = graphs[i]
             result = self.results[i]
             truth = graph["truth"]
@@ -115,4 +135,3 @@ class Base:
 
     def _get_tower_info(self, event, idx):
         return [event.JetTowerEt[idx], event.JetTowerEta[idx], event.JetTowerPhi[idx]]
-        

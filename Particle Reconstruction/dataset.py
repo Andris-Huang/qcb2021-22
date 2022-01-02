@@ -100,7 +100,7 @@ class _ROOT(Dataset):
     
     def _num_evts(self, filename):
         import ROOT
-        chain = ROOT.TChain(self.tree_name, self.tree_name)
+        chain = ROOT.TChain(self.tree_name, self.tree_name) # pylint: disable=maybe-no-member
         chain.Add(filename)
         n_entries = chain.GetEntries()
         return n_entries
@@ -108,7 +108,7 @@ class _ROOT(Dataset):
     def read(self, filename, start_entry=0, nentries=float('inf')):
         import ROOT
         nentries = min(self._num_evts(filename), nentries)
-        chain = ROOT.TChain(self.tree_name, self.tree_name)
+        chain = ROOT.TChain(self.tree_name, self.tree_name) # pylint: disable=maybe-no-member
         chain.Add(filename)
         tot_entries = chain.GetEntries()
         nentries = nentries if (start_entry + nentries) <= tot_entries\
@@ -118,4 +118,22 @@ class _ROOT(Dataset):
             chain.GetEntry(ientry + start_entry)
             yield chain
 
+
+class _TXT(Dataset):
+    """
+    Class for .txt files
+    """
+    def __init__(self):
+        super().__init__(name="TXT")
+
+    def read(self, filename, start_entry=0, nentries=float('inf')):
+        counter = 0
+        with open(filename, 'r') as f:
+            for line in f:
+                if counter < start_entry:
+                    pass
+                elif counter >= nentries:
+                    break
+                yield [float(x) for x in line.split()]
+                counter += 1
     

@@ -1,4 +1,4 @@
-# Jet Classification using Max-cut Solver
+# Particle Reconstruction through Quantum Annealing
 ## Background
 In high energy physics, a meaningful study is to create an algorithm that classifies the type of jets. A jet is a cluster of energy created from a particle after its decay, likely resulting from a collision event. The detector would collect information about the jet to infer what particle(s) was involved in the collision and decay process. Current algorithms used for jet classification include decision trees, recurrent neural networks, and graph neural networks.
 
@@ -7,7 +7,9 @@ We established the nodes as various jets in one event, each contains a list of v
 
 ## Results
 * Config 1: Classification based on di-tau mass using quantum annealing
-  * We obtained an accuracy of 54.29% for 300 gamma to di-tau decay events finished in 7.97 minutes. We also obtained an accuracy of 57.17% accuracy for 300 Z-boson to di-tau events finished in 8.57 minutes.
+    * We obtained an accuracy of 54.29% for 300 gamma to di-tau decay events finished in 7.97 minutes. We also obtained an accuracy of 57.17% accuracy for 300 Z-boson to di-tau events finished in 8.57 minutes.
+* Config 2: Clustering based on four vectors using quantum annealing
+    * We obtained an accuracy of 50.26% for 22 W' to WZ decay events with less than 80 nodes per graph finished in 30.29 minutes. Observed that classical brute-force solution does not work on this task.
 
 ## How to Run
 * Install the necessary packages and libraries by running the setup.sh file in the parent directory qcb2021-22

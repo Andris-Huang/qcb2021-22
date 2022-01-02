@@ -120,36 +120,39 @@ def objective_value(result, nodes, edge_weights):
                 final_value -= edge_weights[(e[1], e[0])]
     return all_weights, final_value
 
-def plot_graph(graph, name, output_dir, color_list='0.1'): 
+def plot_graph(graph, name, output_dir, color_list='0.1', g=None): 
     edges = graph["edges"]
     #edge_labels = graph["edge_labels"]
     nodes = graph["nodes"]
 
-    g = nx.Graph()    
-    node_list = list(range(len(nodes)))
-    g.add_nodes_from(node_list)
-    g.add_weighted_edges_from(edges)
+    if g == None:
+        g = nx.Graph()    
+        node_list = list(range(len(nodes)))
+        g.add_nodes_from(node_list)
+        g.add_weighted_edges_from(edges)
     
     plt.figure(figsize=(5,5))
     pos = nx.spring_layout(g)
-    nx.draw_networkx_nodes(g, pos, node_size=15, node_color='0.1')
+    nx.draw_networkx_nodes(g, pos, node_size=15, node_color=color_list)
     nx.draw_networkx_edges(g, pos, alpha=0.05, edge_color='0.3')
     filename = f"{name}.png"
     out_name = os.path.join(output_dir, filename)
+    print(f">>> The plot {filename} is saved to {out_name}")
     plt.savefig(out_name, bbox_inches='tight')
 
-def plot_final_graph(groups, graph, output_dir):
+def plot_final_graph(groups, graph, output_dir, g=None):
     nodes = graph["nodes"]
     color_list = list(nodes)
-    
+    color_order = ["r", "c"]
     new_edges = []
     i = 0
     for group in groups:
         new_group = []
-        r, g, b = random.randint(1, 255), random.randint(1, 255), random.randint(1,255)
+        #r, g, b = random.randint(1, 255), random.randint(1, 255), random.randint(1,255)
         for n in group:
             j = nodes.index(n)
-            color_list[j] = (r/255, g/255, b/255)
+            #color_list[j] = (r/255, g/255, b/255)
+            color_list[j] = color_order[i]
             new_group.append(j)
         e = list(itertools.combinations(new_group, 2))
         new_edges += e
@@ -170,6 +173,6 @@ def plot_final_graph(groups, graph, output_dir):
         "edge_labels": edge_labels
         }
 
-    plot_graph(new_graph, "Output Graph", output_dir, color_list=color_list)
+    plot_graph(new_graph, "Output Graph", output_dir, color_list=color_list, g=g)
     return new_graph
         

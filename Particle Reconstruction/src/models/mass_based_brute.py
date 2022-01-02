@@ -4,8 +4,10 @@ import importlib
 base_file = importlib.import_module(f"src.models.base")
 Base = base_file.Base
 class Model(Base):
-
-    def make_graph(self, event):
+    def __init__(self, data, num_evts, output_dir, save_fig, config=None, debug=False):
+        super().__init__(data, num_evts, output_dir, save_fig, config, debug)
+        
+    def make_graph(self, event, debug=False):
         if event.nJets < 3 or event.truthTauN != 2:
             return None
         

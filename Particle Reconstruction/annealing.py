@@ -28,7 +28,8 @@ import utils
 import time
 
 
-def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
+def max_cut_solver(graph, output_dir, save_fig=False, 
+                   print_result=False, config=None, return_edge=False):
     """
     Perform the max-cut solver by dwave and return the graph size and solving time.
     Input:
@@ -44,9 +45,6 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
     edges = graph["edges"]
     edge_labels = graph["edge_labels"]
 
-    plot_fig = n_nodes <= 10
-    save_fig = save_fig and plot_fig
-
     # ------- Set up our graph -------
 
     # Create empty graph
@@ -60,11 +58,17 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
         g = G.copy()
         plt.figure()
         pos = nx.spring_layout(G)
-        nx.draw_networkx(g, pos, node_color='r')
-        nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
+        if n_nodes <= 10:
+            nx.draw_networkx(g, pos, node_color='r')
+            nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
+        else:
+            nx.draw_networkx_nodes(g, pos, node_size=15, node_color='0.1')
+            nx.draw_networkx_edges(g, pos, alpha=0.05, edge_color='0.3')
         filename = "Input Graph.png"
         out_name = os.path.join(output_dir, filename)
         plt.savefig(out_name, bbox_inches='tight')
+        print(f">>> The plot {filename} is saved to {out_name}")
+
 
     # ------- Set up our QUBO dictionary -------
 
@@ -78,8 +82,14 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
 
     # ------- Run our QUBO on the QPU -------
     # Set up QPU parameters
-    chainstrength = 2
-    numruns = 10
+    try:
+        chainstrength = config.chain_strength
+    except:
+        chainstrength = 2
+    try:
+        numruns = config.num_runs
+    except:
+        numruns = 10
 
     # Run the QUBO on the solver from your config file
     #start = time.time()
@@ -124,16 +134,23 @@ def max_cut_solver(graph, output_dir, save_fig=False, print_result=False):
     # Display best result
     if save_fig:
         plt.figure()
-        nx.draw_networkx_nodes(G, pos, nodelist=S0, node_color='r')
-        nx.draw_networkx_nodes(G, pos, nodelist=S1, node_color='c')
-        nx.draw_networkx_edges(G, pos, edgelist=cut_edges, style='dashdot', alpha=0.5, width=3)
-        nx.draw_networkx_edges(G, pos, edgelist=uncut_edges, style='solid', width=3)
-        nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
-        nx.draw_networkx_labels(G, pos)
+        if n_nodes <= 10:
+            nx.draw_networkx_nodes(G, pos, nodelist=S0, node_color='r')
+            nx.draw_networkx_nodes(G, pos, nodelist=S1, node_color='b')
+            nx.draw_networkx_edges(G, pos, edgelist=cut_edges, style='dashdot', alpha=0.5, width=3)
+            nx.draw_networkx_edges(G, pos, edgelist=uncut_edges, style='solid', width=3)
+            nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
+            nx.draw_networkx_labels(G, pos)
+        else:
+            nx.draw_networkx_nodes(G, pos, nodelist=S0, node_size=15, node_color='r')
+            nx.draw_networkx_nodes(G, pos, nodelist=S1, node_size=15, node_color='b')
+            nx.draw_networkx_edges(G, pos, edgelist=uncut_edges, alpha=0.05, edge_color='0.3')
 
         filename = "Output Graph.png"
         out_name = os.path.join(output_dir, filename)
         plt.savefig(out_name, bbox_inches='tight')
-        print(">>> Your plot is saved to {}".format(out_name))
+        print(f">>> The plot {filename} is saved to {out_name}")
 
+    if return_edge:
+        return uncut_edges
     return S0, S1
