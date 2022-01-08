@@ -30,22 +30,30 @@ import utils
 
 # ------- Add terminal commands -------
 if __name__ == "__main__":
+    indent = " " * 4
+    helper = f">>> Possible commands:" \
+           + f"\n{indent}-s: save graphs" \
+           + f"\n{indent}-d: do not save result" \
+           + f"\n{indent}--debug: use debug mode" \
+           + f"\n{indent}--heff: hide efficiency for solver"
     if len(sys.argv) < 2:
         print(">>> A configuration is needed!")
+        print(">>> Use --help for direction to commands.")
+        exit()
+    if "--help" in sys.argv:
+        print(helper)
         exit()
     config_name = sys.argv[1]
     config = importlib.import_module(f"src.configs.{config_name}")
-    if len(sys.argv) > 2:
-        save_fig = "-s" in sys.argv
-        save_result = not "-d" in sys.argv
-        debug = "--debug" in sys.argv
-    else:
-        save_fig = False
-        save_result = True
-        debug = False
+    save_fig = "-s" in sys.argv
+    save_result = not "-d" in sys.argv
+    debug = "--debug" in sys.argv
+    display_efficiency = not "--heff" in sys.argv
+
 
 if debug:
     save_fig = True
+    save_result = False
 
 if config.method == "annealing":
     solver = annealing.max_cut_solver
@@ -53,6 +61,9 @@ elif config.method == "qaoa":
     raise NotImplementedError
 elif config.method == "brute":
     solver = brute_solver.brute_solver
+else:
+    print(">>> No such method yet, using default.")
+    solver = annealing.max_cut_solver
 
 inname = config.input_dir
 try:
@@ -69,7 +80,9 @@ else:
     os.makedirs(output_dir, exist_ok=True)
     print(f">>> Output directory created\n>>> Output Path: {output_dir}")
 
-model_name = config.model_name
+model_names = config.model_name
+model_name = model_names if isinstance(model_names, str) else model_names[0]
+print(f">>> Model: {model_names}; Solver: {config.method}")
 model_file = importlib.import_module(f"src.models.{model_name}")
 model_class = model_file.Model
 
@@ -87,17 +100,24 @@ if debug:
 model = model_class(data, num_evts, output_dir, save_fig, config=config, debug=debug)
 
 stamp1 = time.time()
-results = model.get_results(solver)
+results = model.get_results(solver, display_efficiency=display_efficiency)
 
 if debug:
-    print(f"Results: {results}")
+    print(f"***Results: {results}***")
+    truth = model.graphs[0]["truth"]
+    print(f"***Truth: {truth}***")
 
 acc = model.validate()
+eff = model.validate(all_truth=model.reference)
+max_eff = model.validate(all_results=model.reference, all_truth=model.truth)
 stamp2 = time.time()
 
 dt = utils.time_lasted(stamp2 - stamp1)
-final_result = [{"Event Index": list(range(len(results))) + ["Accuracy", "Time"], 
-                 "Is Tagged": results + [acc, dt]}]
+final_result = [{"Event Index": list(range(len(results))) \
+                   + ["Accuracy", "Time", "Efficiency", "Max Possible Accuracy", "Event Ratio"], 
+                 "Is Tagged": results + [acc, dt, eff, max_eff, model.event_ratio]},
+                {"Reference": model.reference,
+                 "Truth": model.truth}]
 print(f">>> Accuracy: {acc:.4f}")
 
 if save_result:

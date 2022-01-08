@@ -1,13 +1,14 @@
 import itertools
 import importlib
 
+utils = importlib.import_module(f"utils")
 base_file = importlib.import_module(f"src.models.base")
 Base = base_file.Base
 class Model(Base):
     def __init__(self, data, num_evts, output_dir, save_fig, config=None, debug=False):
         super().__init__(data, num_evts, output_dir, save_fig, config, debug)
 
-    def make_graph(self, event, debug=False):
+    def make_graph(self, event, debug=False, **kwargs):
         if event.nJets < 3 or event.truthTauN != 2:
             return None
         
@@ -17,7 +18,7 @@ class Model(Base):
         Pt1, Pt2 = event.truthTauEt[0], event.truthTauEt[1]
         eta1, eta2 = event.truthTauEta[0], event.truthTauEta[1]
         phi1, phi2 = event.truthTauPhi[0], event.truthTauPhi[1]
-        true_M = self._calc_mass(Pt1, Pt2, eta1, eta2, phi1, phi2)
+        true_M = utils.calc_mass(Pt1, Pt2, eta1, eta2, phi1, phi2)
 
         nodes = [i for i in range(event.nJets)]
         n_nodes = len(nodes)
@@ -29,9 +30,9 @@ class Model(Base):
 
         min_edge_score = 1e6
         for edge in all_edges:
-            Pt1, eta1, phi1 = self._get_jet_info(event, edge[0])
-            Pt2, eta2, phi2 = self._get_jet_info(event, edge[1])
-            calc_M = self._calc_mass(Pt1, Pt2, eta1, eta2, phi1, phi2)
+            Pt1, eta1, phi1 = utils.get_jet_info(event, edge[0])
+            Pt2, eta2, phi2 = utils.get_jet_info(event, edge[1])
+            calc_M = utils.calc_mass(Pt1, Pt2, eta1, eta2, phi1, phi2)
             edge_score = abs(int(true_M - calc_M))
             if edge_score < min_edge_score:
                 min_edge_score = edge_score
@@ -64,4 +65,4 @@ class Model(Base):
             "truth": truth
             }
         
-        return graph
+        return [graph]

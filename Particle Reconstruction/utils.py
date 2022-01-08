@@ -176,3 +176,34 @@ def plot_final_graph(groups, graph, output_dir, g=None):
     plot_graph(new_graph, "Output Graph", output_dir, color_list=color_list, g=g)
     return new_graph
         
+def calc_mass(Pt1, Pt2, eta1, eta2, phi1, phi2):
+    return np.sqrt(2*Pt1*Pt2*(np.cosh(eta1-eta2)-np.cos(phi1-phi2)))
+
+def get_jet_info(event, idx):
+    return [event.JetPt[idx], event.JetEta[idx], event.JetPhi[idx]]
+
+def get_track_info(event, idx):
+    return [event.TrackPt[idx], event.TrackEta[idx], event.TrackPhi[idx]]
+
+def get_tower_info(event, idx):
+    return [event.JetTowerEt[idx], event.JetTowerEta[idx], event.JetTowerPhi[idx]]
+
+def cos_similarity(a, b):
+    """
+    Return the negative value of inner product.
+    """
+    return -np.dot(np.linalg.norm(a), np.linalg.norm(b))
+
+def euclidean_distance(a, b):
+    """
+    Return root mean square error.
+    """
+    a, b = np.array(a), np.array(b)
+    return np.linalg.norm(a - b)
+
+def abe(a, b):
+    """
+    Return the absolute mean error.
+    """
+    a, b = np.array(a), np.array(b)
+    return np.mean(np.abs(a - b))

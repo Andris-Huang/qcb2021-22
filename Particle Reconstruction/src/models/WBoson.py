@@ -7,7 +7,7 @@ base_file = importlib.import_module(f"src.models.base")
 Base = base_file.Base
 class Model(Base):
 
-    def make_graph(self, event, debug=False):
+    def make_graph(self, event, debug=False, **kwargs):
         scale = 0.001
         n_node_features = 7
         # information of each particle: px, py, pz, E, pdgID, isFromW, isInLeadingJet
@@ -29,7 +29,6 @@ class Model(Base):
 
         nodes = np.array(nodes, dtype=np.float32) / scale
         node_target = np.array(node_target, dtype=np.float32)
-        true_nodes = np.where(node_target==1)[0].tolist()
         node_target = np.expand_dims(node_target, axis=1)
 
         all_edges = list(itertools.combinations(range(n_nodes), 2))
@@ -37,7 +36,7 @@ class Model(Base):
         #edges = np.expand_dims(np.array([0.0]*n_edges, dtype=np.float32), axis=1)
 
         edge_target = [
-            int(edge[0] in true_nodes and edge[1] in true_nodes)
+            int(node_target[edge[0]] == node_target[edge[1]])
             for edge in all_edges
         ]
 
@@ -47,7 +46,8 @@ class Model(Base):
         edge_dict = {}
         for i in range(n_edges):
             e = all_edges[i]
-            edge_score = 1 - np.dot(np.linalg.norm(nodes[e[0]]), np.linalg.norm(nodes[e[1]]))
+            temperature = 0.1
+            edge_score = -np.exp(np.dot(np.linalg.norm(nodes[e[0]]), np.linalg.norm(nodes[e[1]])) / temperature)
             if debug:
                 edge_score = 1- edge_target[i]
             weighted_edges.append((e[0], e[1], edge_score))
@@ -66,7 +66,7 @@ class Model(Base):
             print(n_nodes)
             print(edge_target)
         
-        return graph
+        return [graph]
 
     def predict(self, solver, graph):
         """

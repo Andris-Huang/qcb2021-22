@@ -64,10 +64,15 @@ def max_cut_solver(graph, output_dir, save_fig=False,
         else:
             nx.draw_networkx_nodes(g, pos, node_size=15, node_color='0.1')
             nx.draw_networkx_edges(g, pos, alpha=0.05, edge_color='0.3')
-        filename = "Input Graph.png"
-        out_name = os.path.join(output_dir, filename)
+        count = 0
+        while True:
+            filename = f"Input Graph {count}.png"
+            out_name = os.path.join(output_dir, filename)
+            if os.path.exists(out_name):
+                count += 1
+            else:
+                break
         plt.savefig(out_name, bbox_inches='tight')
-        print(f">>> The plot {filename} is saved to {out_name}")
 
 
     # ------- Set up our QUBO dictionary -------
@@ -146,10 +151,9 @@ def max_cut_solver(graph, output_dir, save_fig=False,
             nx.draw_networkx_nodes(G, pos, nodelist=S1, node_size=15, node_color='b')
             nx.draw_networkx_edges(G, pos, edgelist=uncut_edges, alpha=0.05, edge_color='0.3')
 
-        filename = "Output Graph.png"
+        filename = f"Output Graph {count}.png"
         out_name = os.path.join(output_dir, filename)
         plt.savefig(out_name, bbox_inches='tight')
-        print(f">>> The plot {filename} is saved to {out_name}")
 
     if return_edge:
         return uncut_edges

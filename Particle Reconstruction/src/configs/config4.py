@@ -5,4 +5,4 @@ method = "annealing"
 model_name = "WBoson"
 num_evts = 300
 num_runs = 10
-time_limit = 0
+time_limit = None
