@@ -22,14 +22,15 @@ import networkx as nx
 import os
 import itertools
 import random
+import importlib
 
-import dataset
-import utils
+dataset = importlib.import_module("dataset")
+utils = importlib.import_module("utils")
 import time
 
 
-def max_cut_solver(graph, output_dir, save_fig=False, 
-                   print_result=False, config=None, return_edge=False):
+def solver(graph, output_dir, save_fig=False, 
+           print_result=False, config=None, return_edge=False):
     """
     Perform the max-cut solver by dwave and return the graph size and solving time.
     Input:

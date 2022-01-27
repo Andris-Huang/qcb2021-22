@@ -24,8 +24,6 @@ import time
 import random
 
 import dataset
-import annealing
-import brute_solver
 import utils
 
 # ------- Add terminal commands -------
@@ -48,22 +46,15 @@ if __name__ == "__main__":
     save_fig = "-s" in sys.argv
     save_result = not "-d" in sys.argv
     debug = "--debug" in sys.argv
-    display_efficiency = not "--heff" in sys.argv
+    display_efficiency = not "--heff" in sys.argv and config.method != "clustering"
 
 
 if debug:
     save_fig = True
     save_result = False
 
-if config.method == "annealing":
-    solver = annealing.max_cut_solver
-elif config.method == "qaoa":
-    raise NotImplementedError
-elif config.method == "brute":
-    solver = brute_solver.brute_solver
-else:
-    print(">>> No such method yet, using default.")
-    solver = annealing.max_cut_solver
+method = importlib.import_module(f"src.methods.{config.method}")
+solver = method.solver
 
 inname = config.input_dir
 try:
@@ -108,16 +99,19 @@ if debug:
     print(f"***Truth: {truth}***")
 
 acc = model.validate()
-eff = model.validate(all_truth=model.reference)
-max_eff = model.validate(all_results=model.reference, all_truth=model.truth)
+if display_efficiency:
+    eff = model.validate(all_truth=model.reference)
+    max_eff = model.validate(all_results=model.reference, all_truth=model.truth)
+else:
+    eff, max_eff = "N/A", "N/A"
 stamp2 = time.time()
 
 dt = utils.time_lasted(stamp2 - stamp1)
 final_result = [{"Event Index": list(range(len(results))) \
-                   + ["Accuracy", "Time", "Efficiency", "Max Possible Accuracy", "Event Ratio"], 
+                 + ["Accuracy", "Time", "Efficiency", "Max Possible Accuracy", "Event Ratio"], 
                  "Is Tagged": results + [acc, dt, eff, max_eff, model.event_ratio]},
-                {"Reference": model.reference,
-                 "Truth": model.truth}]
+                {"Reference": model.reference},
+                {"Truth": model.truth}]
 print(f">>> Accuracy: {acc:.4f}")
 
 if save_result:

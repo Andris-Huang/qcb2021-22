@@ -4,14 +4,16 @@ import os
 import itertools
 import random
 
-import dataset
-import utils
 import time
 import tqdm
+import importlib
 
-def brute_solver(graph, output_dir, save_fig=False, 
-                 print_result=False, config=None, return_edge=False,
-                 disable_tqdm=True):
+dataset = importlib.import_module("dataset")
+utils = importlib.import_module("utils")
+
+def solver(graph, output_dir, save_fig=False, 
+           print_result=False, config=None, return_edge=False,
+           disable_tqdm=True):
 
     n_nodes = graph["n_node"]
     edges = graph["edges"]

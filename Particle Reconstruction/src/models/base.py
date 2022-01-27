@@ -91,7 +91,12 @@ class Base:
         for i in iter_bar:
             graph = self.graphs[i]
             n_node = graph["n_node"]
-            pred = self.predict(solver, graph)
+            try:
+                pred = self.predict(solver, graph)
+            except:
+                print(f">>> Event {i} failed!")
+                self.truth.remove(self.truth[i])
+                continue
             results.append(pred)
             self.results = results   
             graphs_so_far = self.graphs[:i+1]
